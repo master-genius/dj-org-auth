@@ -1,0 +1,52 @@
+{% include 'header.html'  %}
+<div class="grid-x">
+    <div class="cell small-1 medium-2 large-3">
+        &nbsp;
+    </div>
+    <div class="cell small-10 medium-8 large-6">
+        <form onsubmit="return false;" action="/org/runlogin/" method="post">
+            {% csrf_token %}
+            <label>Username</label>
+            <input type="text" name="username" id="username" value="">
+
+            <label>Password</label>
+            <input type="password" name="passwd" id="passwd" value="">
+
+            <input type="submit" value="Login" class="button hollow alert small" onclick="ajax_login()">
+            &nbsp; &nbsp;
+            <p id="login-tip"></p>
+        </form>
+        
+    </div>
+    <div class="cell small-1 medium-2 large-3">
+        &nbsp;
+    </div>
+</div>
+<script>
+    function ajax_login() {
+        var user = {
+            org_id:'hbt01',
+            username:brutal.autod('#username'),
+            passwd:brutal.autod('#passwd'),
+            redirect:location.href.pathname,
+            csrfmiddlewaretoken:document.getElementsByName('csrfmiddlewaretoken')[0].value
+        }
+        aj_post({
+            url:'/org/runlogin/',
+            data:brutal.jsontodata(user),
+            success:function(xr) {
+                if (xr.status == 0) {
+                    if (xr.redirect) {
+                        location.href = xr.redirect;
+                    } else {
+                        location.href = '/';
+                    }
+                } else {
+                    brutal.autod('#login-tip', 'username os password is wrong');
+                }
+            }
+        });
+    }
+</script>
+
+{% include 'footer.html' %}

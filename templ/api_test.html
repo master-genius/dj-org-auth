@@ -1,0 +1,205 @@
+{% include 'apiheader.html'  %}
+<div class="grid-x">
+    <div class="cell small-1 medium-2 large-3">
+        &nbsp;
+    </div>
+    <div class="cell small-10 medium-8 large-6">
+        <br>
+        <h3>API Test</h3>
+        <form onsbumit="return false;">
+            <select name="" id="api-name" onchange="set_api_form()">
+                <option value="plat-login">plat-login</option>
+                <option value="login">login</option>
+                <option value="logout">logout</option>
+                <option value="add-member">add-member</option>
+                <option value="org-bind">org-bind</option>
+                <option value="plat-logout">plat-logout</option>
+            </select>
+        </form>
+
+        <div id="api-form-html"></div>
+
+        <p id="api-ret-data">
+
+        </p>
+    
+    </div>
+    <div class="cell small-1 medium-2 large-3">
+        &nbsp;
+    </div>
+</div>
+    <script>
+        //<label for="">Org ID</label>
+        //<input type="text" id="org-id" required>
+    var api_form_html = {
+        "plat-login":`
+            <form onsubmit="return false;">    
+                <label for="">username</label>
+                <input type="text" id="username" required>
+
+                <label for="">passwd</label>
+                <input type="password" id="passwd" required>
+                <input type="submit" class="button small hollow" value="Login" onclick="api_platlogin()">
+            </form>
+        `,
+        "login":`
+            <form onsubmit="return false;">
+                <label for="">username</label>
+                <input type="text" id="username" required>
+
+                <label for="">passwd</label>
+                <input type="password" id="passwd" required>
+                <input type="submit" class="button small hollow" value="Login" onclick="api_login()">
+            </form>
+        `,
+
+        "logout":`
+            <button class="button small hollow alert" onclick="api_logout()">Logout</button>
+        `,
+
+        "plat-logout":`
+            <button class="button small hollow alert" onclick="api_platlogout()">Logout</button>
+        `,
+
+        "add-member":`
+            <form onsubmit="return false;">
+                <label for="">Member Id</label>
+                <input type="text" id="member_id">
+
+                <label for="">passwd</label>
+                <input type="password" id="passwd">
+
+                <label for="">role</label>
+                <select id="org-role">
+                    <option value="teacher">Teacher</option>
+                </select>
+                <input type="submit" class="button small hollow" onclick="api_addmember()" value="Add">
+            </form>
+        `,
+
+        "org-bind":`
+            <form onsubmit="return false;">
+                <label for="">platform username</label>
+                <input type="text" id="username">
+
+                <label for="">passwd</label>
+                <input type="password" id="passwd">
+                <input type="submit" class="button small hollow" onclick="api_orgbind()">
+            </form>
+        `
+    };
+
+    function set_api_form() {
+        var api = brutal.selected('#api-name');
+        if (api_form_html[api]!==undefined) {
+            brutal.autod('#api-form-html', api_form_html[api]);
+        }
+        brutal.autod('#api-ret-data','');
+    }
+
+    function api_call(url, method, callback, errorcall, data=null) {
+        if (method == 'get') {
+            aj_get({
+                url:url,
+                success:function(xr) {
+                    callback(xr);
+                }
+            })
+        } else if (method == 'post') {
+            aj_get({
+                url:url,
+                success:function(xr) {
+                    if (xr.status == -1) {
+                        errorcall(xr);
+                    } else{
+                        data.csrfmiddlewaretoken = xr.csrftoken;
+                        aj_post({
+                            url:url,
+                            data:brutal.jsontodata(data),
+                            success:function(xr) {
+                                callback(xr);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    }
+
+    function show_api_retdata(data) {
+        brutal.autod('#api-ret-data', JSON.stringify(data));
+    }
+
+    function api_platlogin() {
+        var data = {
+            username : brutal.autod('#username'),
+            passwd   : brutal.autod('#passwd')
+        };
+
+        api_call('/user/login/', 'post', function(xr){
+            show_api_retdata(xr);
+        }, function(xr){}, data);
+    }
+
+    function api_login() {
+        var data = {
+            username: brutal.autod('#username'),
+            passwd:brutal.autod('#passwd'),
+            //org_id : brutal.autod('#org-id')
+        };
+
+        api_call('/org/hbt01/login/', 'post', function(xr){
+            show_api_retdata(xr);
+        },function(xr){
+            show_api_retdata(xr);
+        }, data);
+    }
+
+    function api_addmember() {
+        var data = {
+            username : brutal.autod('#member_id'),
+            passwd : brutal.autod('#passwd'),
+            org_role : brutal.selected('#org-role')
+        };
+        
+        api_call('/org/hbt01/addmember', 'post', function(xr){
+            show_api_retdata(xr);
+        },function(xr){
+            show_api_retdata(xr);
+        },data);
+    }
+
+    function api_logout() {
+        api_call('/org/hbt01/logout/','get', function(xr){
+            brutal.autod('#api-ret-data', JSON.stringify(xr));
+        }, function(xr){
+
+        });
+    }
+
+    function api_platlogout() {
+        api_call('/user/logout/','get', function(xr){
+            brutal.autod('#api-ret-data', JSON.stringify(xr));
+        }, function(xr){
+
+        });
+    }
+
+    function api_orgbind() {
+        var data = {
+            username : brutal.autod('#username'),
+            passwd   : brutal.autod('#passwd')
+        }
+        api_call('/org/hbt01/orgbind', 'post', function(xr){
+            show_api_retdata(xr);
+        },function(xr){
+
+        }, data);
+    }
+
+    window.onpageshow = function() {
+        set_api_form();
+    };
+    </script>
+
+{% include 'footer.html' %}
